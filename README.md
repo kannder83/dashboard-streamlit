@@ -1,2 +1,2 @@
-# dashboard-sreamlit
-streamlit
+# dashboard-streamlit
+dashboard-streamlit
