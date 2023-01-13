@@ -18,7 +18,7 @@ with st.sidebar:
 
 # Cargar datos en el dataframe
 
-df_cars = pd.read_csv("./data/vehiculos_electricos_hibridos.csv")
+df_cars = pd.read_csv("./data/electric_cars.csv")
 
 st.write(df_cars)
 
@@ -62,12 +62,36 @@ cars_filter = df_cars[
 # Total de Vehiculos registrados
 with st.container():
     # Creación de KPI
-    # kpi1, kpi2 = st.columns(2)
+    kpi1, kpi2 = st.columns(2)
     # Creación de KPI con st.metric
-    # with kpi1:
-    st.metric(label='Total Vehiculos Registrados',
-              value=f"{df_cars['CANTIDAD'].sum()}")
+    with kpi1:
+        st.metric(label='Total Vehiculos Registrados',
+                  value=f"{df_cars['CANTIDAD'].sum():,.0f}")
 
-    # with kpi2:
-    #     st.metric(label='Total Vehiculos Registrados',
-    #               value=f"{df_cars['CANTIDAD'].sum():,.0f}")
+    with kpi2:
+        st.metric(label='Total Vehiculos Registrados en Bogota',
+                  value=f"{df_cars['MUNICIPIO'].value_counts()['BOGOTA']:,.0f}")
+
+
+# Para graficar
+# Titulo
+st.header("Graficos Vehiculos")
+# Configuración graficios
+with st.container():
+    # Se crean 2 columnas para el grafico de lineas y el de pie
+    # Calcular el DF que se va a graficar
+    # data_line = df_cars.groupby("MUNICIPIO")["CANTIDAD"].count()
+    data_line = cars_filter
+    st.write(data_line)
+    # # Cargar configurar el grafico
+    # line_chart = px.line(
+    #     data_line,
+    #     x="CANTIDAD",
+    #     y="CANTIDAD",
+    #     title="Vehiculos por ciudad"
+    # )
+    # line_chart.update_layout(
+    #     height=600,
+    #     width=1000
+    # )
+    # st.plotly_chart(line_chart)
