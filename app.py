@@ -62,12 +62,12 @@ cars_filter = df_cars[
 # Total de Vehiculos registrados
 with st.container():
     # Creación de KPI
-    kpi1, kpi2 = st.columns(2)
+    # kpi1, kpi2 = st.columns(2)
     # Creación de KPI con st.metric
-    with kpi1:
-        st.metric(label='Total Vehiculos Registrados',
-                  value=f"{df_cars['CANTIDAD'].sum()}")
+    # with kpi1:
+    st.metric(label='Total Vehiculos Registrados',
+              value=f"{df_cars['CANTIDAD'].sum()}")
 
-    with kpi2:
-        st.metric(label='Total Vehiculos Registrados',
-                  value=f"{df_cars['CANTIDAD'].sum():,.0f}")
+    # with kpi2:
+    #     st.metric(label='Total Vehiculos Registrados',
+    #               value=f"{df_cars['CANTIDAD'].sum():,.0f}")
