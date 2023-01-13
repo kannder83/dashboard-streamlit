@@ -2,11 +2,15 @@
 
 dashboard-streamlit
 
-## streamlit
+## Jupyter
+
+Para inicializar el jupyter
 
 ```bash
-streamlit hello
+jupyter-lab
 ```
+
+## streamlit
 
 Para iniciar el dashboard
 
