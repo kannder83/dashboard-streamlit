@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import altair as alt
 
 # configuracion de la pagina
 
@@ -30,32 +31,26 @@ with st.container():
 # Filtros
 with st.container():
     # Multiselect
-    filter_fuel, filter_year, filter_service = st.columns(3)
+    filter_fuel, filter_year = st.columns(2)
 
     with filter_fuel:
         # Filtro por combustible
         list_fuel = df_cars["COMBUSTIBLE"].unique()
         list_fuel.sort()
-        view_fuel = st.multiselect("COMBUSTIBLE", list_fuel, list_fuel[0])
+        view_fuel = st.multiselect(
+            "COMBUSTIBLE", list_fuel, list_fuel[1])
 
     with filter_year:
-        # Filtro por año
-        list_years = df_cars["MODELO"].unique()
+        # Filtro por año de registro
+        list_years = df_cars["ANIO_REGISTRO"].unique()
         list_years.sort()
-        view_year = st.multiselect("MODELO", list_years, list_years[0])
+        view_year = st.multiselect("ANIO_REGISTRO", list_years, list_years[-1])
 
-    with filter_service:
-        # Filtro por combustible
-        list_service = df_cars["SERVICIO"].unique()
-        list_service.sort()
-        view_service = st.multiselect(
-            "SERVICIO", list_service, list_service[0])
 
 # Dataframe filtrado
 cars_filter = df_cars[
     (df_cars["COMBUSTIBLE"].isin(view_fuel)) &
-    (df_cars["MODELO"].isin(view_year)) &
-    (df_cars["SERVICIO"].isin(view_service))
+    (df_cars["MODELO"].isin(view_year))
 ]
 
 
@@ -65,12 +60,12 @@ with st.container():
     kpi1, kpi2 = st.columns(2)
     # Creación de KPI con st.metric
     with kpi1:
-        st.metric(label='Total Vehiculos Registrados',
-                  value=f"{df_cars['CANTIDAD'].sum():,.0f}")
+        st.metric(label='Total Vehiculos Registrados Nacional',
+                  value=f"{cars_filter['CANTIDAD'].sum():,.0f}")
 
     with kpi2:
         st.metric(label='Total Vehiculos Registrados en Bogota',
-                  value=f"{df_cars['MUNICIPIO'].value_counts()['BOGOTA']:,.0f}")
+                  value=f"{(cars_filter['MUNICIPIO']=='BOGOTA').sum():,.0f}")
 
 
 # Para graficar
@@ -80,13 +75,20 @@ st.header("Graficos Vehiculos")
 with st.container():
     # Se crean 2 columnas para el grafico de lineas y el de pie
     # Calcular el DF que se va a graficar
-    # data_line = df_cars.groupby("MUNICIPIO")["CANTIDAD"].count()
-    data_line = cars_filter
-    st.write(data_line)
-    # # Cargar configurar el grafico
+    data_line = pd.DataFrame(cars_filter.groupby(
+        "MUNICIPIO")["CANTIDAD"].count())
+    data_line.reset_index(inplace=True)
+# df_ciudades = pd.DataFrame(df_cars.groupby("MUNICIPIO")["CANTIDAD"].count())
+# df_ciudades.reset_index(inplace=True)
+# df_ciudades
+
+    # data_line = data_line.reset_index(inplace=True)
+
+    st.write(data_line.head(10))
+    # Cargar configurar el grafico
     # line_chart = px.line(
     #     data_line,
-    #     x="CANTIDAD",
+    #     x="MUNICIPIO",
     #     y="CANTIDAD",
     #     title="Vehiculos por ciudad"
     # )
@@ -95,3 +97,11 @@ with st.container():
     #     width=1000
     # )
     # st.plotly_chart(line_chart)
+
+    data_line = data_line.sort_values(by='CANTIDAD', ascending=False).head(10)
+    line_chart = alt.Chart(data_line).mark_circle().encode(
+        y="MUNICIPIO",
+        x="CANTIDAD",
+        size="CANTIDAD"
+    )
+    st.altair_chart(line_chart)
