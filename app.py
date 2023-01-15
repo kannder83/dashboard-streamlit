@@ -14,7 +14,8 @@ st.set_page_config(
 
 with st.sidebar:
     st.title("Dashboard")
-    st.write("Vehiculos Registrados en Colombia")
+    st.write(
+        "Vehiculos Registrados en Colombia por Municipios - Electricos e Hibridos")
 
 
 # Cargar datos en el dataframe
@@ -139,7 +140,7 @@ with st.container():
     sort_df = sort_df[sort_df["MARCA"].isin(list_marca["MARCA"])]
 
     line_chart = alt.Chart(sort_df).mark_bar(opacity=0.8).encode(
-        y=alt.Y("MARCA:N", title="Marca de Vehiculo"),
+        y=alt.Y("MARCA:N", title=""),
         x=alt.X("sum(COUNT):Q", title="Vehiculos Registrados"),
         color=alt.Color("ANIO_REGISTRO:N", title="Año de Registro",
                         scale=alt.Scale(scheme="tableau20")),
@@ -162,7 +163,7 @@ with st.container():
     data_line = data_line.sort_values(by='COUNT', ascending=False)
 
     line_chart = alt.Chart(data_line).mark_bar().encode(
-        x=alt.X("sum(COUNT):Q", title="Total"),
+        x=alt.X("sum(COUNT):Q", title="Cantidad de Vehiculos"),
         y=alt.Y("ANIO_REGISTRO:N", title=""),
         color="CLASE:N",
         order=alt.Order(
