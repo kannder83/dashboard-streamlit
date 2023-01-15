@@ -44,7 +44,7 @@ streamlit run app.py
 
 Para visualizar el Dashboard en linea puede acceder al siguiente link.
 
-[Dashboar URL](https://kannder83-dashboard-streamlit-app-2lf9lb.streamlit.app/)
+[Dashboar URL](https://kannder83-dashboard-streamlit-app-ydneac.streamlit.app/)
 
 Los datos para realizar el Dashboard fueron tomados de la siguiente página.
 
