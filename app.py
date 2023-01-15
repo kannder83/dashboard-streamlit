@@ -14,43 +14,66 @@ st.set_page_config(
 
 with st.sidebar:
     st.title("Dashboard")
-    st.write("Dashboard de Ejemplo")
+    st.write("Vehiculos Registrados en Colombia")
 
 
 # Cargar datos en el dataframe
 
 df_cars = pd.read_csv("./data/electric_cars.csv")
 
-st.write(df_cars)
+# st.write(df_cars)
+
+# Contenedor Imagen:
+with st.container():
+    st.image("./data/car_image.webp",
+             caption='Electric cars', use_column_width="auto")
 
 # contenedor principal
 with st.container():
     # titulo
-    st.title("Vehiculos Electricos e Hibridos")
+    st.title(
+        "Vehiculos Registrados en Colombia por Municipios - Electricos e Hibridos")
 
 # Filtros
 with st.container():
     # Multiselect
-    filter_fuel, filter_year = st.columns(2)
+    filter_municipio, filter_year = st.columns(2)
 
-    with filter_fuel:
-        # Filtro por combustible
-        list_fuel = df_cars["COMBUSTIBLE"].unique()
-        list_fuel.sort()
-        view_fuel = st.multiselect(
-            "COMBUSTIBLE", list_fuel, list_fuel[1])
+    with filter_municipio:
+        # Filtro por Municipio
+        list_municipio = df_cars["MUNICIPIO"].unique()
+        list_municipio.sort()
+
+        all_cities = st.radio(
+            "Seleccione la forma de visualizar las ciudades:",
+            ('Por ciudades', 'Todas las ciudades'))
+
+        if all_cities == 'Todas las ciudades':
+            view_municipio = list_municipio
+        else:
+            view_municipio = st.multiselect(
+                "Municipio", list_municipio, "BOGOTA")
 
     with filter_year:
         # Filtro por año de registro
         list_years = df_cars["ANIO_REGISTRO"].unique()
         list_years.sort()
-        view_year = st.multiselect("ANIO_REGISTRO", list_years, list_years[-1])
+
+        all_years = st.radio(
+            "Seleccione la forma de visualizar los años:",
+            ('Por año', 'Todos los años'))
+
+        if all_years == 'Todos los años':
+            view_year = list_years
+        else:
+            view_year = st.multiselect(
+                "Año de Registro", list_years, 2022)
 
 
 # Dataframe filtrado
 cars_filter = df_cars[
-    (df_cars["COMBUSTIBLE"].isin(view_fuel)) &
-    (df_cars["MODELO"].isin(view_year))
+    (df_cars["MUNICIPIO"].isin(view_municipio)) &
+    (df_cars["ANIO_REGISTRO"].isin(view_year))
 ]
 
 
@@ -60,48 +83,97 @@ with st.container():
     kpi1, kpi2 = st.columns(2)
     # Creación de KPI con st.metric
     with kpi1:
-        st.metric(label='Total Vehiculos Registrados Nacional',
+        st.metric(label=f"Total Vehiculos Registrados",
                   value=f"{cars_filter['CANTIDAD'].sum():,.0f}")
 
     with kpi2:
-        st.metric(label='Total Vehiculos Registrados en Bogota',
-                  value=f"{(cars_filter['MUNICIPIO']=='BOGOTA').sum():,.0f}")
+        st.metric(label='Total de Marcas Registradas',
+                  value=f"{(cars_filter['MARCA']).nunique():,.0f}")
 
 
-# Para graficar
-# Titulo
-st.header("Graficos Vehiculos")
 # Configuración graficios
 with st.container():
-    # Se crean 2 columnas para el grafico de lineas y el de pie
-    # Calcular el DF que se va a graficar
+    st.header("Clasificación de Vehiculos")
+
     data_line = pd.DataFrame(cars_filter.groupby(
-        "MUNICIPIO")["CANTIDAD"].count())
-    data_line.reset_index(inplace=True)
-# df_ciudades = pd.DataFrame(df_cars.groupby("MUNICIPIO")["CANTIDAD"].count())
-# df_ciudades.reset_index(inplace=True)
-# df_ciudades
+        ["ANIO_REGISTRO", "MUNICIPIO", "COMBUSTIBLE", "SERVICIO"]).size().reset_index(name='COUNT'))
 
-    # data_line = data_line.reset_index(inplace=True)
+    left_chart, right_chart = st.columns(2)
 
-    st.write(data_line.head(10))
-    # Cargar configurar el grafico
-    # line_chart = px.line(
-    #     data_line,
-    #     x="MUNICIPIO",
-    #     y="CANTIDAD",
-    #     title="Vehiculos por ciudad"
-    # )
-    # line_chart.update_layout(
-    #     height=600,
-    #     width=1000
-    # )
-    # st.plotly_chart(line_chart)
+    with left_chart:
+        line_chart = alt.Chart(data_line).mark_arc(innerRadius=50).encode(
+            theta="sum(COUNT)",
+            color=alt.Color("COMBUSTIBLE", title="Tipo de Motor",
+                            scale=alt.Scale(scheme="tableau10"))
+        )
+        st.altair_chart(line_chart, use_container_width=True)
 
-    data_line = data_line.sort_values(by='CANTIDAD', ascending=False).head(10)
-    line_chart = alt.Chart(data_line).mark_circle().encode(
-        y="MUNICIPIO",
-        x="CANTIDAD",
-        size="CANTIDAD"
+    with right_chart:
+        line_chart = alt.Chart(data_line).mark_arc(innerRadius=50).encode(
+            theta="sum(COUNT)",
+            color=alt.Color("SERVICIO", title="Tipo de Servicio",
+                            scale=alt.Scale(scheme="category10"))
+        )
+        st.altair_chart(line_chart, use_container_width=True)
+
+
+# Configuración graficios
+with st.container():
+    st.header("Marcas de Vehiculos")
+    st.write("Marcas de vehiculos registrados por año.")
+
+    # Datos
+    data_line = pd.DataFrame(cars_filter.groupby(
+        ['ANIO_REGISTRO', "MARCA"]).size().reset_index(name='COUNT'))
+
+    sort_df = pd.DataFrame(data_line.sort_values(
+        by="COUNT", ascending=False)).reset_index(drop=True)
+
+    list_marca = pd.DataFrame(sort_df["MARCA"].unique(), columns=["MARCA"])
+
+    number_marca = st.slider('Cantidad de Marcas para visualizar: ', 1,
+                             list_marca["MARCA"].nunique(), 1)
+
+    list_marca = list_marca.head(number_marca)
+
+    sort_df = sort_df[sort_df["MARCA"].isin(list_marca["MARCA"])]
+
+    line_chart = alt.Chart(sort_df).mark_bar(opacity=0.8).encode(
+        y=alt.Y("MARCA:N", title="Marca de Vehiculo"),
+        x=alt.X("sum(COUNT):Q", title="Vehiculos Registrados"),
+        color=alt.Color("ANIO_REGISTRO:N", title="Año de Registro",
+                        scale=alt.Scale(scheme="tableau20")),
+        order=alt.Order(
+            'COUNT:N',
+            sort="descending"
+        )
     )
-    st.altair_chart(line_chart)
+
+    st.altair_chart(line_chart, use_container_width=True)
+
+
+# Configuración graficios
+with st.container():
+    st.header("Clase de Vehiculos")
+    st.write("Vehiculos registrados por año")
+    data_line = pd.DataFrame(cars_filter.groupby(
+        ['ANIO_REGISTRO', 'CLASE']).size().reset_index(name='COUNT'))
+
+    data_line = data_line.sort_values(by='COUNT', ascending=False)
+
+    line_chart = alt.Chart(data_line).mark_bar().encode(
+        x=alt.X("sum(COUNT):Q", title="Total"),
+        y=alt.Y("ANIO_REGISTRO:N", title=""),
+        color="CLASE:N",
+        order=alt.Order(
+              'COUNT:N',
+              sort="descending"
+        )
+    )
+
+    st.altair_chart(line_chart, use_container_width=True)
+
+with st.container():
+    st.header("Información del Dashboard")
+    st.write("Repositorio: https://github/kannder83/dashboard-streamlit")
+    st.write("Datos: https://www.datos.gov.co/Transporte/Numero-de-Veh-culos-El-ctricos-Hibridos/7qfh-tkr3")
